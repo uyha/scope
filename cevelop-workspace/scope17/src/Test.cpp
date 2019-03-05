@@ -415,7 +415,7 @@ void test_make_unique_resource_checked(){
 
 	{
 		auto bar=make_unique_resource_checked(0.0,0,[&out](auto i){out << i << "not called";});
-		auto foo=make_unique_resource_checked(0.0,-1,[&out](auto i){out << "called";});
+		auto foo=make_unique_resource_checked(0.0,-1,[&out](auto ){out << "called";});
 	}
 	ASSERT_EQUAL("called",out.str());
 
@@ -454,8 +454,8 @@ void test_make_unique_resource_checked_lvalue(){
 	{
 		//throwing_copy r{"",out}; // this does not work, make_unique_resource_checked only works for copies
 		auto r{0LL};
-		auto bar=make_unique_resource_checked(r,0,[&out](auto & i){out << "not called";});
-		auto foo=make_unique_resource_checked(r,1,[&out](auto & i){out << "called\n";});
+		auto bar=make_unique_resource_checked(r,0,[&out](auto & ){out << "not called";});
+		auto foo=make_unique_resource_checked(r,1,[&out](auto & ){out << "called\n";});
 	}
 	ASSERT_EQUAL("called\n",out.str());
 }
@@ -546,8 +546,8 @@ struct X {
 	}
 };
 void testCompilabilityGuardForNonPointerUniqueResource() {
-	auto x = unique_resource(X { }, [](X i) {});
-	unique_resource y(X { }, [](X i) {});
+	auto x = unique_resource(X { }, [](X ) {});
+	unique_resource y(X { }, [](X ) {});
 #if defined(CHECK_COMPILE_ERRORS)
 	x->foo();// compile error!
 	*x; // compile error!
@@ -591,7 +591,7 @@ struct functor_move_copy_throws{
 
 
 void test_scope_exit_with_throwing_fun_copy(){
-	functor_copy_throws fun;
+	functor_copy_throws fun { };
 #if defined(CHECK_COMPILE_ERRORS)
 	auto x = scope_exit(std::move(fun)); // doesn't compile due to static_assert
 	auto x1 = scope_exit(42); // not callable
@@ -603,7 +603,7 @@ void test_scope_exit_with_throwing_fun_copy(){
 }
 
 void test_scope_exit_with_throwing_fun_move(){
-	functor_move_throws fun;
+	functor_move_throws fun { };
 	const functor_move_throws &funref { fun };
 //#if defined(CHECK_COMPILE_ERRORS)
 	auto x = scope_exit(std::move(fun)); // no longer a compile error, because it is copied.
@@ -613,7 +613,7 @@ void test_scope_exit_with_throwing_fun_move(){
 	ASSERTM("should just work",true);
 }
 void test_scope_exit_with_throwing_fun_move_and_copy(){
-	functor_move_copy_throws fun;
+	functor_move_copy_throws fun { };
 #if defined(CHECK_COMPILE_ERRORS)
 	auto x = scope_exit(std::move(fun)); // compile error, because non-copyable
 #endif
@@ -681,7 +681,7 @@ void demo_scope_exit_fail_success_Cpp17(){
 
 
 void test_scope_exit_lvalue_ref_passing_rvalue_fails_to_compile(){
-	typedef void (*fun)();
+	using fun = void(*)();
 	auto y = scope_exit<const fun &>(fun(nullptr)); // no static assert needed. fails to match.
 	y.release(); // avoid crash from calling nullptr
 	scope_exit<const fun&> z(fun(nullptr));
@@ -709,13 +709,13 @@ struct nasty{};
 
 struct deleter_2nd_throwing_copy {
 	deleter_2nd_throwing_copy()=default;
-	deleter_2nd_throwing_copy(deleter_2nd_throwing_copy const &other){
+	deleter_2nd_throwing_copy(deleter_2nd_throwing_copy const &){
 		if (copied %2) {
 			throw nasty{};
 		}
 		++copied;
 	}
-	void operator()(int const & t) const {
+	void operator()(int const & ) const {
 		++deleted;
 	}
 	static inline int deleted{};
