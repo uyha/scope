@@ -8,13 +8,13 @@
 
 
 #include <utility>
-
 #include <functional>
 #include <limits> // for maxint
 #include <type_traits>
 
-namespace std::experimental{
-// contribution by (c) Eric Niebler 2016, adapted by (c) 2017-19 Peter Sommerlad
+#define SCOPE_NS std::experimental
+
+namespace SCOPE_NS{
 namespace detail {
 namespace hidden{
 
@@ -104,15 +104,11 @@ public:
     }
 };
 
-}}
 
 
 
 
-namespace std {
-namespace experimental {
 // new policy-based exception proof design by Eric Niebler
-namespace detail{
 
 struct on_exit_policy
 {
@@ -261,16 +257,6 @@ public:
 template<class EF, class Policy>
 void swap(basic_scope_exit<EF, Policy> &, basic_scope_exit<EF, Policy> &) = delete;
 
-
-// end (c) Eric Niebler
-
-}
-}
-
-
-
-namespace std{
-namespace experimental {
 
 
 template<typename R, typename D>
@@ -435,16 +421,13 @@ noexcept(std::is_nothrow_constructible_v<std::decay_t<R>,R> &&
 //->unique_resource<std::decay_t<R>,std::decay_t<D>>
 {
 	bool const mustrelease(r == invalid);
-	//return //unique_resource
-//			unique_resource<std::decay_t<R>,std::decay_t<D>>{std::forward<R>(r), std::forward<D>(d), ! bool(r == invalid)};
-//	unique_resource<R,std::decay_t<D>>
 	unique_resource resource{std::forward<R>(r), std::forward<D>(d),!mustrelease};
 	return resource;
 
 }
 
 // end of (c) Eric Niebler part
-}}
+}
 
 
 #endif /* SRC_SCOPE_HPP_ */
