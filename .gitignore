@@ -33,5 +33,6 @@ Release
 Debug
 .metadata/
 .settings/
+.cproject
 *Test.xml
 .*.html
