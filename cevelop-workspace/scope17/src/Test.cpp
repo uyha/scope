@@ -77,7 +77,7 @@ void DemonstrateTransactionFilecopy(){
 std::string access_returned_from_string(size_t& len){
 	std::string s{"a string"};
 	scope_exit guard{[&]{ len = s.size();}};
-	return (s); // pessimize copy elision to demonstrate effect
+	return std::move(s); // pessimize copy elision to demonstrate effect
 }
 void DemonstrateSurprisingReturnedFromBehavior(){
 	size_t len{0xffffffff};
@@ -700,7 +700,7 @@ void test_scope_exit_lvalue_ref_passing_rvalue_fails_to_compile(){
 void test_compile_time_warning_nodiscard_scope_guards(){
 	std::ostringstream out{};
 	scope_exit([&out]{out << 1;});
-	ASSERTM("start writing tests", false);
+	ASSERT_EQUAL("1",out.str());
 }
 
 

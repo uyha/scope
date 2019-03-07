@@ -293,15 +293,25 @@ public://should be private
 //    template<typename RM, typename DM, typename S>
 //    friend
 //    auto make_unique_resource_checked(RM &&r, const S &invalid, DM &&d)
-//    noexcept(noexcept(make_unique_resource(std::forward<RM>(r), std::forward<DM>(d))));
-    // the following as well:
+////    noexcept(noexcept(make_unique_resource(std::forward<RM>(r), std::forward<DM>(d))))
+//    ;
+    // the following as well: complains that its exception specification doesn't match its own exception specification in clang
+public:
 //    template<typename MR, typename MD, typename S>
+////	[[nodiscard]]
 //    friend
 //	auto make_unique_resource_checked(MR &&r, const S &invalid, MD &&d)
 //    noexcept(std::is_nothrow_constructible_v<std::decay_t<MR>,MR> &&
 //    		std::is_nothrow_constructible_v<std::decay_t<MD>,MD>)
-//    ->unique_resource<std::decay_t<MR>,std::decay_t<MD>>;
-
+//    ->unique_resource<std::decay_t<MR>,std::decay_t<MD>>
+//			{
+//				bool const mustrelease(r == invalid);
+//				unique_resource resource{std::forward<MR>(r), std::forward<MD>(d),!mustrelease};
+//				return resource;
+//
+//			}
+//
+//;
 public:
     template<typename RR, typename DD,
         typename = std::enable_if_t<std::is_constructible<detail::_box<R>, RR, detail::_empty_scope_exit>::value &&
@@ -413,15 +423,15 @@ template<typename R, typename D>
 unique_resource(R, D, bool)
 -> unique_resource<R, D>;
 
-template<typename R, typename D, typename S>
+template<typename MR, typename MD, typename S>
 [[nodiscard]]
-auto make_unique_resource_checked(R &&r, const S &invalid, D &&d)
-noexcept(std::is_nothrow_constructible_v<std::decay_t<R>,R> &&
-		std::is_nothrow_constructible_v<std::decay_t<D>,D>)
-//->unique_resource<std::decay_t<R>,std::decay_t<D>>
+auto make_unique_resource_checked(MR &&r, const S &invalid, MD &&d)
+noexcept(std::is_nothrow_constructible_v<std::decay_t<MR>,MR> &&
+		std::is_nothrow_constructible_v<std::decay_t<MD>,MD>)
+->unique_resource<std::decay_t<MR>,std::decay_t<MD>>
 {
 	bool const mustrelease(r == invalid);
-	unique_resource resource{std::forward<R>(r), std::forward<D>(d),!mustrelease};
+	unique_resource resource{std::forward<MR>(r), std::forward<MD>(d),!mustrelease};
 	return resource;
 
 }
