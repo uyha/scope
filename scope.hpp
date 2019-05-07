@@ -232,7 +232,12 @@ class [[nodiscard]] basic_scope_exit :  Policy
     template<typename EFP>
     using _ctor_from = std::is_constructible<detail::_box<EF>, EFP, detail::_empty_scope_exit>;
     template<typename EFP>
+#ifndef _MSC_VER
     using _noexcept_ctor_from = std::bool_constant<noexcept(detail::_box<EF>(std::declval<EFP>(), detail::_empty_scope_exit{}))>;
+#else
+    // MSVC thinks that it is a function style cast
+    using _noexcept_ctor_from = std::bool_constant<noexcept(detail::_box<EF>::_box(std::declval<EFP>(), detail::_empty_scope_exit{}))>;
+#endif
 public:
     template<typename EFP, typename = std::enable_if_t<_ctor_from<EFP>::value>>
     explicit basic_scope_exit(EFP &&ef) noexcept(_noexcept_ctor_from<EFP>::value)
@@ -284,8 +289,8 @@ public://should be private
     unique_resource(RR &&r, DD &&d, bool should_run)
 	noexcept(noexcept(detail::_box<R>(std::forward<RR>(r), detail::_empty_scope_exit {})) &&
 			noexcept(detail::_box<D>(std::forward<DD>(d), detail::_empty_scope_exit {})))
-      : resource(std::forward<RR>(r), scope_exit([&] {if (should_run) d(r);}))
-      , deleter(std::forward<DD>(d),  scope_exit([&, this] {if (should_run) d(get());}))
+      : resource{std::forward<RR>(r), scope_exit([&] {if (should_run) d(r);})}
+      , deleter{std::forward<DD>(d),  scope_exit([&, this] {if (should_run) d(get());})}
 	  , execute_on_destruction { should_run }
     {}
     // need help in making the factory a nice friend...

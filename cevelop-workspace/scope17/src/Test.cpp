@@ -29,7 +29,15 @@ SOFTWARE.
 #include <fstream>
 #include <cstdio>
 #include <fcntl.h>
+#ifndef _MSC_VER
 #include <unistd.h>
+#else
+#include <io.h>
+#define open _open
+#define close _close
+#define unlink _unlink
+#define write _write
+#endif
 
 #include <string>
 
@@ -63,7 +71,8 @@ void DemoFstream(){
 
 using std::filesystem::path;
 void copy_file_transact(path const & from, path const & to) {
-   path t = to.native() + ".deleteme";
+   path t{to};
+   t += path{".deleteme"};
    auto guard= scope_fail{ [t]{remove(t);} };
    copy_file(from, t);
    rename(t, to);
