@@ -31,10 +31,8 @@ SOFTWARE.
 #include <fcntl.h>
 #ifndef _MSC_VER
 #include <unistd.h>
-#define _T(str) str
 #else
 #include <io.h>
-#define _T(str) L##str
 #define open _open
 #define close _close
 #define unlink _unlink
@@ -73,7 +71,8 @@ void DemoFstream(){
 
 using std::filesystem::path;
 void copy_file_transact(path const & from, path const & to) {
-   path t = to.native() + _T(".deleteme");
+   path t{to};
+   t += path{".deleteme"};
    auto guard= scope_fail{ [t]{remove(t);} };
    copy_file(from, t);
    rename(t, to);
