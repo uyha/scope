@@ -29,7 +29,15 @@ SOFTWARE.
 #include <fstream>
 #include <cstdio>
 #include <fcntl.h>
+#ifndef _MSC_VER
 #include <unistd.h>
+#else
+#include <io.h>
+#define open _open
+#define close _close
+#define unlink _unlink
+#define write _write
+#endif
 
 #include <string>
 
