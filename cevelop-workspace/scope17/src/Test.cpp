@@ -63,7 +63,8 @@ void DemoFstream(){
 
 using std::filesystem::path;
 void copy_file_transact(path const & from, path const & to) {
-   path t = to.native() + ".deleteme";
+   path t{to};
+   t += path{".deleteme"};
    auto guard= scope_fail{ [t]{remove(t);} };
    copy_file(from, t);
    rename(t, to);
