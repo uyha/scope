@@ -706,11 +706,6 @@ void test_scope_exit_lvalue_ref_passing_rvalue_fails_to_compile(){
 
 }
 
-void test_compile_time_warning_nodiscard_scope_guards(){
-	std::ostringstream out{};
-	scope_exit([&out]{out << 1;});
-	ASSERT_EQUAL("1",out.str());
-}
 
 
 
@@ -790,7 +785,6 @@ bool runAllTests(int argc, const char *argv[]) {
 	s.push_back(CUTE(DemoFstream));
 	s.push_back(CUTE(DemonstrateTransactionFilecopy));
 	s.push_back(CUTE(DemonstrateSurprisingReturnedFromBehavior));
-	s.push_back(CUTE(test_compile_time_warning_nodiscard_scope_guards));
 	cute::xml_file_opener xmlfile(argc, argv);
 	cute::xml_listener<cute::ide_listener<>> lis(xmlfile.out);
 	auto runner = cute::makeRunner(lis, argc, argv);
