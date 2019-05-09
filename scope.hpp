@@ -12,11 +12,20 @@
 #include <limits> // for maxint
 #include <type_traits>
 
-#define SCOPE_NS std::experimental
-
-namespace SCOPE_NS{
+#ifdef FOR_BOOST
+#define SCOPE_NS boost
+#define SCOPE_NS_END
+#define SCOPE_NS_PREFIX boost
+#else
+#define SCOPE_NS std { namespace experimental
+#define SCOPE_NS_END }
+#define SCOPE_NS_PREFIX std::experimental
+#endif
+namespace SCOPE_NS {
 namespace detail {
 namespace hidden{
+
+struct factory_holder;
 
 // should this helper be standardized? // write testcase where recognizable.
 template<typename T>
@@ -218,6 +227,8 @@ template<class EF, class Policy /*= on_exit_policy*/>
 class [[nodiscard]] basic_scope_exit :  Policy
 {
 	static_assert(std::is_invocable_v<EF>,"scope guard must be callable");
+	static_assert(std::is_nothrow_move_constructible_v<EF>||std::is_copy_constructible_v<EF>,
+			"scope guard function must be nothrow move constructible or copy constructible");
     detail::_box<EF> exit_function;
 
 	static auto _make_failsafe(std::true_type, const void *)
@@ -251,9 +262,10 @@ public:
         if(this->should_execute())
             exit_function.get()();
     }
-	basic_scope_exit(const basic_scope_exit &) = delete;
-	basic_scope_exit &operator=(const basic_scope_exit &) = delete;
-    basic_scope_exit &operator=(basic_scope_exit &&) = delete;
+    // implicitly deleted or not defined
+//	basic_scope_exit(const basic_scope_exit &) = delete;
+//	basic_scope_exit &operator=(const basic_scope_exit &) = delete;
+//    basic_scope_exit &operator=(basic_scope_exit &&) = delete;
 
     using Policy::release;
 
@@ -282,7 +294,6 @@ class unique_resource
 
     static constexpr auto is_nothrow_delete_v=std::bool_constant<noexcept(std::declval<D &>()(std::declval<R &>()))>::value;
 
-public://should be private
     template<typename RR, typename DD,
         typename = std::enable_if_t<std::is_constructible_v<detail::_box<R>, RR, detail::_empty_scope_exit> &&
                                     std::is_constructible_v<detail::_box<D>, DD, detail::_empty_scope_exit>>>
@@ -293,30 +304,7 @@ public://should be private
       , deleter{std::forward<DD>(d),  scope_exit([&, this] {if (should_run) d(get());})}
 	  , execute_on_destruction { should_run }
     {}
-    // need help in making the factory a nice friend...
-    // the following two ICEs my g++ and gives compile errors about mismatche exception spec on clang7
-//    template<typename RM, typename DM, typename S>
-//    friend
-//    auto make_unique_resource_checked(RM &&r, const S &invalid, DM &&d)
-////    noexcept(noexcept(make_unique_resource(std::forward<RM>(r), std::forward<DM>(d))))
-//    ;
-    // the following as well: complains that its exception specification doesn't match its own exception specification in clang
-public:
-//    template<typename MR, typename MD, typename S>
-////	[[nodiscard]]
-//    friend
-//	auto make_unique_resource_checked(MR &&r, const S &invalid, MD &&d)
-//    noexcept(std::is_nothrow_constructible_v<std::decay_t<MR>,MR> &&
-//    		std::is_nothrow_constructible_v<std::decay_t<MD>,MD>)
-//    ->unique_resource<std::decay_t<MR>,std::decay_t<MD>>
-//			{
-//				bool const mustrelease(r == invalid);
-//				unique_resource resource{std::forward<MR>(r), std::forward<MD>(d),!mustrelease};
-//				return resource;
-//
-//			}
-//
-//;
+    friend struct detail::hidden::factory_holder;  // a level of indirection is the trick...
 public:
     template<typename RR, typename DD,
         typename = std::enable_if_t<std::is_constructible<detail::_box<R>, RR, detail::_empty_scope_exit>::value &&
@@ -367,7 +355,7 @@ public:
 		}
 		return *this;
 	}
-    ~unique_resource() //noexcept(is_nowthrow_delete_v) // removed deleter must not throw
+    ~unique_resource()
     {
         reset();
     }
@@ -402,8 +390,9 @@ public:
     {
         return deleter.get();
     }
+    // THIS IS NOT A POINTER TYPE, the following operations are only available if R is a native pointer
     template<typename RR=R>
-    auto operator->() const noexcept//(noexcept(detail::for_noexcept_on_copy_construction(this_.get())))
+    auto operator->() const noexcept
 	-> std::enable_if_t<std::is_pointer_v<RR>,decltype(get())>
     {
         return get();
@@ -416,10 +405,25 @@ public:
         return *get();
     }
 
-	unique_resource& operator=(const unique_resource &) = delete;
-	unique_resource(const unique_resource &) = delete;
+    // implicitly deleted:
+//	unique_resource& operator=(const unique_resource &) = delete;
+//	unique_resource(const unique_resource &) = delete;
 
 };
+namespace detail{
+namespace hidden {
+struct factory_holder{
+	template<typename MR, typename MD>
+	static
+	auto special_maker(MR&& r, MD&& d, bool shouldrun){
+		 unique_resource<std::decay_t<MR>,std::decay_t<MD>>
+		  resource{std::forward<MR>(r), std::forward<MD>(d),shouldrun};
+		 return resource;
+	}
+};
+}
+}
+
 
 template<typename R, typename D>
 unique_resource(R, D)
@@ -436,12 +440,13 @@ noexcept(std::is_nothrow_constructible_v<std::decay_t<MR>,MR> &&
 ->unique_resource<std::decay_t<MR>,std::decay_t<MD>>
 {
 	bool const mustrelease(r == invalid);
-	unique_resource resource{std::forward<MR>(r), std::forward<MD>(d),!mustrelease};
+	auto resource =  detail::hidden::factory_holder::special_maker(std::forward<MR>(r), std::forward<MD>(d),!mustrelease);
+//	unique_resource resource{std::forward<MR>(r), std::forward<MD>(d),!mustrelease};
 	return resource;
 
 }
 
-// end of (c) Eric Niebler part
+SCOPE_NS_END
 }
 
 
