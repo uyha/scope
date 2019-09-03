@@ -37,3 +37,5 @@ Debug
 *Test.xml
 .*.html
 scope17.xml
+
+build/

@@ -1,0 +1,33 @@
+
+language: cpp
+
+matrix:
+  include:
+    - os: linux
+      dist: bionic
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-8
+      env:
+         - CC=gcc-8
+         - CXX=g++-8
+         - configuration=Debug
+
+    - os: linux
+      dist: bionic
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-8
+      env:
+         - CC=gcc-8
+         - CXX=g++-8
+         - configuration=Release
+
+script:
+  mkdir build && cd build && cmake -DCMAKE_VERBOSE_MAKEFILE=TRUE .. && cmake --build . --config $configuration && ctest -C $configuration
