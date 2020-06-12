@@ -11,7 +11,9 @@ if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
   message(STATUS "CMake version: ${CMAKE_VERSION}")
 endif ()
 
-if (MASTER_PROJECT) 
+option(SCOPE_TEST "Generate the scope_test target" ${MASTER_PROJECT})
+
+if (SCOPE_TEST)
   add_subdirectory(cevelop-workspace)
 endif ()
 
