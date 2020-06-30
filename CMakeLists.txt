@@ -3,22 +3,26 @@ cmake_minimum_required (VERSION 3.12 FATAL_ERROR)
 
 enable_testing()
 
-project(scope_test LANGUAGES CXX)
+project(scope17 LANGUAGES CXX)
 
-add_executable(scope_test cevelop-workspace/scope17/src/Test.cpp cevelop-workspace/scope17/src/scope.hpp)
+set(MASTER_PROJECT OFF)
+if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+  set(MASTER_PROJECT ON)
+  message(STATUS "CMake version: ${CMAKE_VERSION}")
+endif ()
 
-target_include_directories(scope_test PRIVATE cevelop-workspace/scope17/cute)
+option(SCOPE_TEST "Generate the scope_test target" ${MASTER_PROJECT})
 
-set_property(TARGET scope_test PROPERTY CXX_STANDARD 17)
+if (SCOPE_TEST)
+  add_subdirectory(cevelop-workspace)
+endif ()
 
-if(
-    "${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR
-    ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" AND "${CMAKE_HOST_SYSTEM_NAME}" STREQUAL "Windows"))
-    target_compile_definitions(scope_test PRIVATE _CRT_SECURE_NO_WARNINGS)
-endif()
-
-if("${CMAKE_HOST_SYSTEM_NAME}" STREQUAL "Linux")
-    target_link_libraries(scope_test PRIVATE "stdc++fs")
-endif()
-
-add_test(NAME scope_test COMMAND scope_test)
+add_library(scope INTERFACE)
+target_sources(scope INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/scope.hpp)
+target_include_directories(scope INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+)
+target_include_directories(scope SYSTEM INTERFACE
+  $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/scope17>
+)
+target_compile_features(scope INTERFACE cxx_std_17)
