@@ -33,6 +33,7 @@ option(SCOPE_TEST "Generate the scope_test target" ${MASTER_PROJECT})
 if(SCOPE_TEST)
   enable_testing()
   add_subdirectory(cevelop-workspace)
+  add_subdirectory(examples)
 endif()
 
 option(SCOPE_INSTALL "Generate the scope_test target" ${MASTER_PROJECT})
@@ -44,7 +45,7 @@ if(SCOPE_INSTALL)
   install(EXPORT scopeTargets
     FILE scopeTargets.cmake
     NAMESPACE std::
-    DESTINATION lib/cmake
+    DESTINATION lib/cmake/scope
   )
 
   export(TARGETS scope
@@ -57,13 +58,13 @@ if(SCOPE_INSTALL)
   include(CMakePackageConfigHelpers)
   configure_package_config_file(scopeConfig.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/scopeConfig.cmake
-    INSTALL_DESTINATION lib/cmake
+    INSTALL_DESTINATION lib/cmake/scope
   )
   write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/scopeConfigVersion.cmake
     COMPATIBILITY SameMajorVersion
   )
 
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/scopeConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/scopeConfigVersion.cmake
-      DESTINATION lib/cmake
+      DESTINATION lib/cmake/scope
   )
 endif()
