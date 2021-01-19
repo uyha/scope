@@ -1,6 +1,3 @@
-#include <fcntl.h>
-#include <unistd.h>
-
 #include <cassert>
 #include <cstdio>
 #include <filesystem>
@@ -9,7 +6,18 @@
 #include <sstream>
 #include <string>
 
-#include "../scope.hpp"
+#include "scope.hpp"
+
+#ifndef _MSC_VER
+#include <fcntl.h>
+#include <unistd.h>
+#else
+#include <io.h>
+#define open _open
+#define close _close
+#define unlink _unlink
+#define write _write
+#endif
 
 namespace {
 using namespace std::experimental;
