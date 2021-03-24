@@ -1,7 +1,8 @@
 # scope17
-C++17 version of `unique_resource` and scope_guards from LFTS3
+C++17 version of `unique_resource` and `scope_guards` from LFTS3
 
 List of tested compilers:
+- OSX and AppleClang 12.0
 - Linux and gcc 8.3
 - Windows and msvc 2017
 - Windows and msvc 2019
