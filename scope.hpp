@@ -337,14 +337,14 @@ public:
         if (&that != this) {
             reset();
             if constexpr (std::is_nothrow_move_assignable_v<detail::_box<R>>)
-                if constexpr (is_nothrow_move_assignable_v<detail::_box<D>>) {
+                if constexpr (std::is_nothrow_move_assignable_v<detail::_box<D>>) {
                     resource = std::move(that.resource);
                     deleter = std::move(that.deleter);
                 } else {
                     deleter = _as_const(that.deleter);
                     resource = std::move(that.resource);
                 }
-            else if constexpr (is_nothrow_move_assignable_v<detail::_box<D>>) {
+            else if constexpr (std::is_nothrow_move_assignable_v<detail::_box<D>>) {
                 resource = _as_const(that.resource);
                 deleter = std::move(that.deleter);
             } else {
