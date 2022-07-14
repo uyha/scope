@@ -28,6 +28,7 @@
 #include "cute_base.h"
 #include "cute_diff_values.h"
 #include "cute_determine_traits.h"
+#include "cute_determine_version.h"
 #include "cute_deprecated.h"
 #include "cute_range.h"
 #include <cmath>
@@ -47,12 +48,16 @@ namespace cute {
 		bool do_equals_floating_with_delta(ExpectedValue const &expected
 				,ActualValue const &actual
 				,DeltaValue const &delta) {
-			return std::abs(delta)  >= std::abs(expected-actual);
+			using std::abs; // allow for user-defined types with abs overload
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+			return bool(abs(delta) >= abs(expected-actual)); // Accommodate non-standard boolean type with explicit conversion
+#pragma GCC diagnostic pop
 		}
 		template <typename ExpectedValue, typename ActualValue, bool select_non_floating_point_type>
 		bool do_equals_floating(ExpectedValue const &expected
 					,ActualValue const &actual,const impl_place_for_traits::integral_constant<bool, select_non_floating_point_type>&){
-			return expected==actual; // normal case for most types uses operator==!
+			return bool(expected==actual); // normal case for most types uses operator==!, accommodate non bool operator ==
 		}
 		template <typename ExpectedValue, typename ActualValue>
 		bool do_equals_floating(ExpectedValue const &expected

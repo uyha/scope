@@ -176,7 +176,7 @@ class basic_scope_exit; // silence brain dead clang warning -Wmismatched-tags
 
 template<class EF>
 struct [[nodiscard]] scope_exit : basic_scope_exit<EF, detail::on_exit_policy>{
-    using basic_scope_exit<EF, detail::on_exit_policy>::basic_scope_exit;
+	using basic_scope_exit<EF, detail::on_exit_policy>::basic_scope_exit;
 };
 
 template <class EF>
@@ -187,7 +187,7 @@ scope_exit(EF) -> scope_exit<EF>;
 
 template<class EF>
 struct scope_fail : basic_scope_exit<EF, detail::on_fail_policy>{
-    using basic_scope_exit<EF, detail::on_fail_policy>::basic_scope_exit;
+	using basic_scope_exit<EF, detail::on_fail_policy>::basic_scope_exit;
 };
 
 template <class EF>
@@ -198,7 +198,7 @@ scope_fail(EF) -> scope_fail<EF>;
 
 template<class EF>
 struct scope_success : basic_scope_exit<EF, detail::on_success_policy>{
-    using basic_scope_exit<EF,detail::on_success_policy>::basic_scope_exit;
+	using basic_scope_exit<EF,detail::on_success_policy>::basic_scope_exit;
 };
 
 template <class EF>
@@ -226,12 +226,17 @@ struct _empty_scope_exit
 template<class EF, class Policy /*= on_exit_policy*/>
 class [[nodiscard]] basic_scope_exit :  Policy
 {
-    static_assert(std::is_invocable_v<EF>,"scope guard must be callable");
-    static_assert(std::is_nothrow_move_constructible_v<EF>||std::is_copy_constructible_v<EF>,
-            "scope guard function must be nothrow move constructible or copy constructible");
+	static_assert(std::is_invocable_v<EF>,"scope guard must be callable");
+	static_assert(std::is_nothrow_move_constructible_v<EF>||std::is_copy_constructible_v<EF>,
+			"scope guard function must be nothrow move constructible or copy constructible");
     detail::_box<EF> exit_function;
-
-    static auto _make_failsafe(std::true_type, const void *)
+    // lambdas can degenerate to object pointers
+	static auto _make_failsafe(std::true_type, const void *)
+    {
+        return detail::_empty_scope_exit{};
+    }
+	// function pointers (from reference) can not degenerate to an object pointer
+	static auto _make_failsafe(std::true_type, void( * ) ())
     {
         return detail::_empty_scope_exit{};
     }
@@ -263,8 +268,8 @@ public:
             exit_function.get()();
     }
     // implicitly deleted or not defined
-//  basic_scope_exit(const basic_scope_exit &) = delete;
-//  basic_scope_exit &operator=(const basic_scope_exit &) = delete;
+//	basic_scope_exit(const basic_scope_exit &) = delete;
+//	basic_scope_exit &operator=(const basic_scope_exit &) = delete;
 //    basic_scope_exit &operator=(basic_scope_exit &&) = delete;
 
     using Policy::release;
@@ -281,12 +286,12 @@ class unique_resource
 {
     static_assert((std::is_move_constructible_v<R> && std::is_nothrow_move_constructible_v<R>) ||
                   std::is_copy_constructible_v<R>,
-                  "resource must be nothrow_move_constructible or copy_constructible");
+				  "resource must be nothrow_move_constructible or copy_constructible");
     static_assert((std::is_move_constructible_v<R> && std::is_nothrow_move_constructible_v<D>) ||
                   std::is_copy_constructible_v<D>,
-                  "deleter must be nothrow_move_constructible or copy_constructible");
+				  "deleter must be nothrow_move_constructible or copy_constructible");
 
-    static const unique_resource &this_; // never ODR used! Just for getting no_except() expr
+	static const unique_resource &this_; // never ODR used! Just for getting no_except() expr
 
     detail::_box<R> resource;
     detail::_box<D> deleter;
@@ -298,11 +303,11 @@ class unique_resource
         typename = std::enable_if_t<std::is_constructible_v<detail::_box<R>, RR, detail::_empty_scope_exit> &&
                                     std::is_constructible_v<detail::_box<D>, DD, detail::_empty_scope_exit>>>
     unique_resource(RR &&r, DD &&d, bool should_run)
-    noexcept(noexcept(detail::_box<R>(std::forward<RR>(r), detail::_empty_scope_exit {})) &&
-            noexcept(detail::_box<D>(std::forward<DD>(d), detail::_empty_scope_exit {})))
+	noexcept(noexcept(detail::_box<R>(std::forward<RR>(r), detail::_empty_scope_exit {})) &&
+			noexcept(detail::_box<D>(std::forward<DD>(d), detail::_empty_scope_exit {})))
       : resource{std::forward<RR>(r), scope_exit([&] {if (should_run) d(r);})}
       , deleter{std::forward<DD>(d),  scope_exit([&, this] {if (should_run) d(get());})}
-      , execute_on_destruction { should_run }
+	  , execute_on_destruction { should_run }
     {}
     friend struct detail::hidden::factory_holder;  // a level of indirection is the trick...
 public:
@@ -311,50 +316,50 @@ public:
                                     std::is_constructible<detail::_box<D>, DD, detail::_empty_scope_exit>::value >
     >
     unique_resource(RR &&r, DD &&d)
-    noexcept(noexcept(detail::_box<R>(std::forward<RR>(r), detail::_empty_scope_exit {})) &&
-             noexcept(detail::_box<D>(std::forward<DD>(d), detail::_empty_scope_exit {})))
+	noexcept(noexcept(detail::_box<R>(std::forward<RR>(r), detail::_empty_scope_exit {})) &&
+			 noexcept(detail::_box<D>(std::forward<DD>(d), detail::_empty_scope_exit {})))
       : resource(std::forward<RR>(r), scope_exit([&] {d(r);}))
       , deleter(std::forward<DD>(d), scope_exit([&, this] {d(get());}))
     {}
-    unique_resource(    unique_resource&& that)
-            noexcept(noexcept(detail::_box<R>(that.resource.move(), detail::_empty_scope_exit {})) &&
-                     noexcept(detail::_box<D>(that.deleter.move(), detail::_empty_scope_exit {})))
-        : resource(that.resource.move(), detail::_empty_scope_exit { })
-        , deleter(that.deleter.move(), scope_exit([&, this] { if (that.execute_on_destruction) that.get_deleter()(get());that.release(); }))
-        , execute_on_destruction(std::exchange(that.execute_on_destruction, false))
-        { }
+	unique_resource(	unique_resource&& that)
+			noexcept(noexcept(detail::_box<R>(that.resource.move(), detail::_empty_scope_exit {})) &&
+					 noexcept(detail::_box<D>(that.deleter.move(), detail::_empty_scope_exit {})))
+		: resource(that.resource.move(), detail::_empty_scope_exit { })
+		, deleter(that.deleter.move(), scope_exit([&, this] { if (that.execute_on_destruction) that.get_deleter()(get());that.release(); }))
+		, execute_on_destruction(std::exchange(that.execute_on_destruction, false))
+		{ }
 
-    unique_resource &operator=(unique_resource &&that) noexcept(is_nothrow_delete_v &&
-            std::is_nothrow_move_assignable_v<R> &&
-            std::is_nothrow_move_assignable_v<D>)
-    {
-        static_assert(std::is_nothrow_move_assignable<R>::value ||
-                std::is_copy_assignable<R>::value,
-                "The resource must be nothrow-move assignable, or copy assignable");
-        static_assert(std::is_nothrow_move_assignable<D>::value ||
-                std::is_copy_assignable<D>::value,
-                "The deleter must be nothrow-move assignable, or copy assignable");
-        if (&that != this) {
-            reset();
-            if constexpr (std::is_nothrow_move_assignable_v<detail::_box<R>>)
-                if constexpr (std::is_nothrow_move_assignable_v<detail::_box<D>>) {
-                    resource = std::move(that.resource);
-                    deleter = std::move(that.deleter);
-                } else {
-                    deleter = _as_const(that.deleter);
-                    resource = std::move(that.resource);
-                }
-            else if constexpr (std::is_nothrow_move_assignable_v<detail::_box<D>>) {
-                resource = _as_const(that.resource);
-                deleter = std::move(that.deleter);
-            } else {
-                resource = _as_const(that.resource);
-                deleter = _as_const(that.deleter);
-            }
-            execute_on_destruction = std::exchange(that.execute_on_destruction, false);
-        }
-        return *this;
-    }
+	unique_resource &operator=(unique_resource &&that) noexcept(is_nothrow_delete_v &&
+			std::is_nothrow_move_assignable_v<R> &&
+			std::is_nothrow_move_assignable_v<D>)
+	{
+		static_assert(std::is_nothrow_move_assignable<R>::value ||
+				std::is_copy_assignable<R>::value,
+				"The resource must be nothrow-move assignable, or copy assignable");
+		static_assert(std::is_nothrow_move_assignable<D>::value ||
+				std::is_copy_assignable<D>::value,
+				"The deleter must be nothrow-move assignable, or copy assignable");
+		if (&that != this) {
+			reset();
+			if constexpr (std::is_nothrow_move_assignable_v<detail::_box<R>>)
+				if constexpr (is_nothrow_move_assignable_v<detail::_box<D>>) {
+					resource = std::move(that.resource);
+					deleter = std::move(that.deleter);
+				} else {
+					deleter = _as_const(that.deleter);
+					resource = std::move(that.resource);
+				}
+			else if constexpr (is_nothrow_move_assignable_v<detail::_box<D>>) {
+				resource = _as_const(that.resource);
+				deleter = std::move(that.deleter);
+			} else {
+				resource = _as_const(that.resource);
+				deleter = _as_const(that.deleter);
+			}
+			execute_on_destruction = std::exchange(that.execute_on_destruction, false);
+		}
+		return *this;
+	}
     ~unique_resource()
     {
         reset();
@@ -371,11 +376,11 @@ public:
     template<typename RR>
     auto reset(RR &&r)
         noexcept(noexcept(resource.reset(std::forward<RR>(r))))
-    -> decltype(resource.reset(std::forward<RR>(r)), void())
+	-> decltype(resource.reset(std::forward<RR>(r)), void())
     {
         auto &&guard = scope_fail([&, this]{ get_deleter()(r); }); // -Wunused-variable on clang
         reset();
-        resource.reset(std::forward<RR>(r));
+		resource.reset(std::forward<RR>(r));
         execute_on_destruction = true;
     }
     void release() noexcept
@@ -393,33 +398,33 @@ public:
     // THIS IS NOT A POINTER TYPE, the following operations are only available if R is a native pointer
     template<typename RR=R>
     auto operator->() const noexcept
-    -> std::enable_if_t<std::is_pointer_v<RR>,decltype(get())>
+	-> std::enable_if_t<std::is_pointer_v<RR>,decltype(get())>
     {
         return get();
     }
     template<typename RR=R>
     auto operator*() const noexcept
-        -> std::enable_if_t<std::is_pointer_v<RR> && ! std::is_void_v<std::remove_pointer_t<RR>>,
-        std::add_lvalue_reference_t<std::remove_pointer_t<R>>>
+    	-> std::enable_if_t<std::is_pointer_v<RR> && ! std::is_void_v<std::remove_pointer_t<RR>>,
+		std::add_lvalue_reference_t<std::remove_pointer_t<R>>>
     {
         return *get();
     }
 
     // implicitly deleted:
-//  unique_resource& operator=(const unique_resource &) = delete;
-//  unique_resource(const unique_resource &) = delete;
+//	unique_resource& operator=(const unique_resource &) = delete;
+//	unique_resource(const unique_resource &) = delete;
 
 };
 namespace detail{
 namespace hidden {
 struct factory_holder{
-    template<typename MR, typename MD>
-    static
-    auto special_maker(MR&& r, MD&& d, bool shouldrun){
-         unique_resource<std::decay_t<MR>,std::decay_t<MD>>
-          resource{std::forward<MR>(r), std::forward<MD>(d),shouldrun};
-         return resource;
-    }
+	template<typename MR, typename MD>
+	static
+	auto special_maker(MR&& r, MD&& d, bool shouldrun){
+		 unique_resource<std::decay_t<MR>,std::decay_t<MD>>
+		  resource{std::forward<MR>(r), std::forward<MD>(d),shouldrun};
+		 return resource;
+	}
 };
 }
 }
@@ -436,13 +441,13 @@ template<typename MR, typename MD, typename S>
 [[nodiscard]]
 auto make_unique_resource_checked(MR &&r, const S &invalid, MD &&d)
 noexcept(std::is_nothrow_constructible_v<std::decay_t<MR>,MR> &&
-        std::is_nothrow_constructible_v<std::decay_t<MD>,MD>)
+		std::is_nothrow_constructible_v<std::decay_t<MD>,MD>)
 ->unique_resource<std::decay_t<MR>,std::decay_t<MD>>
 {
-    bool const mustrelease(r == invalid);
-    auto resource =  detail::hidden::factory_holder::special_maker(std::forward<MR>(r), std::forward<MD>(d),!mustrelease);
-//  unique_resource resource{std::forward<MR>(r), std::forward<MD>(d),!mustrelease};
-    return resource;
+	bool const mustrelease(r == invalid);
+	auto resource =  detail::hidden::factory_holder::special_maker(std::forward<MR>(r), std::forward<MD>(d),!mustrelease);
+//	unique_resource resource{std::forward<MR>(r), std::forward<MD>(d),!mustrelease};
+	return resource;
 
 }
 
