@@ -1,7 +1,7 @@
 #ifndef SRC_SCOPE_HPP_
 #define SRC_SCOPE_HPP_
 
-//          Copyright Eric Niebler and Peter Sommerlad 2016 - 2019.
+//          Copyright Eric Niebler and Peter Sommerlad 2016 - 2022.
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          https://www.boost.org/LICENSE_1_0.txt)
@@ -11,6 +11,7 @@
 #include <functional>
 #include <limits> // for maxint
 #include <type_traits>
+#include <exception> // for std::uncaught_exceptions
 
 #ifdef FOR_BOOST
 #define SCOPE_NS boost
@@ -49,17 +50,18 @@ template<typename T>
 class _box
 {
     T value;
-    _box(T const &t) noexcept(noexcept(T(t)))
+    explicit _box(T const &t) noexcept(noexcept(T(t)))
       : value(t)
     {}
-    _box(T &&t) noexcept(noexcept(T(std::move_if_noexcept(t))))
+    explicit _box(T &&t) noexcept(noexcept(T(std::move_if_noexcept(t))))
       : value(std::move_if_noexcept(t))
     {}
 
 public:
     template<typename TT, typename GG,
         typename = std::enable_if_t<std::is_constructible_v<T, TT>>>
-    explicit _box(TT &&t, GG &&guard) noexcept(noexcept(_box((T &&) t)))
+//	    explicit _box(TT &&t, GG &&guard) noexcept(noexcept(_box((T &&) t)))
+    explicit _box(TT &&t, GG &&guard) noexcept(noexcept(_box(std::declval<TT>())))
       : _box(std::forward<TT>(t))
     {
         guard.release();
@@ -94,7 +96,7 @@ class _box<T &>
 public:
     template<typename TT, typename GG,
         typename = std::enable_if_t<std::is_convertible_v<TT, T &>>>
-    _box(TT &&t, GG &&guard) noexcept(noexcept(static_cast<T &>((TT &&) t)))
+    _box(TT &&t, GG &&guard) noexcept(noexcept(static_cast<T &>(static_cast<TT &&>( t))))
       : value(static_cast<T &>(t))
     {
         guard.release();
