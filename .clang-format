@@ -1,4 +1,18 @@
----
-BasedOnStyle: Google
-IndentWidth:     4
-# BraceWrapping:
+Language: Cpp
+BasedOnStyle: LLVM
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: true
+AlignOperands: AlignAfterOperator
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: Empty
+AlwaysBreakTemplateDeclarations: Yes
+BinPackArguments: false
+BinPackParameters: false
+BreakBeforeBinaryOperators: NonAssignment
+BreakConstructorInitializers: BeforeComma
+BreakInheritanceList: BeforeComma
+ColumnLimit: 120
+IncludeBlocks: Regroup
+KeepEmptyLinesAtTheStartOfBlocks: false
+PenaltyBreakOpenParenthesis: 1000
+PenaltyReturnTypeOnItsOwnLine: 1000
