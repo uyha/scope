@@ -1,0 +1,36 @@
+name: Build and test
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened]
+jobs:
+  ubuntu:
+    strategy:
+      matrix:
+        config:
+          - { compiler: gcc, version: 9 }
+          - { compiler: gcc, version: 10 }
+          - { compiler: gcc, version: 11 }
+          - { compiler: clang, version: 13 }
+          - { compiler: clang, version: 14 }
+          - { compiler: clang, version: 15 }
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Insall GCC
+        run: sudo apt install -y g++-${{matrix.config.version}}
+        if: ${{matrix.config.compiler == 'gcc' }}
+      - name: Insall Clang
+        run: sudo apt install -y clang-${{matrix.config.version}}
+        if: ${{matrix.config.compiler == 'clang' }}
+      - name: Configure with GCC
+        run: cmake -B build -S . -DCMAKE_CXX_COMPILER=g++-${{matrix.config.version}}
+        if: ${{matrix.config.compiler == 'gcc' }}
+      - name: Configure with Clang
+        run: cmake -B build -S . -DCMAKE_CXX_COMPILER=clang++-${{matrix.config.version}}
+        if: ${{matrix.config.compiler == 'clang' }}
+      - name: Build
+        run: cmake --build build -j
+      - name: Test
+        run: ctest --test-dir build/tests

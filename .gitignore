@@ -39,3 +39,4 @@ Debug
 scope17.xml
 
 build/
+compile_commands.json
