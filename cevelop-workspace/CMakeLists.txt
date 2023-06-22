@@ -1,4 +1,4 @@
-add_executable(scope_test scope17/src/Test.cpp ../scope.hpp)
+add_executable(scope_test scope17/src/Test.cpp)
 target_include_directories(scope_test PRIVATE scope17/cute)
 target_link_libraries(scope_test PRIVATE scope)
 
