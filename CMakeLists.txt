@@ -18,14 +18,13 @@ if(NOT DEFINED CMAKE_CXX_STANDARD)
 endif()
 
 add_library(scope INTERFACE)
-add_library(std::scope ALIAS scope)
+add_library(scope::scope ALIAS scope)
 
-### target_sources(scope INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/scope.hpp)
 target_include_directories(scope INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
 target_include_directories(scope SYSTEM INTERFACE
-  $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/experimental>
+  $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/scope>
 )
 target_compile_features(scope INTERFACE cxx_std_17)
 
@@ -44,16 +43,16 @@ if(SCOPE_INSTALL)
 
   install(EXPORT scopeTargets
     FILE scopeTargets.cmake
-    NAMESPACE std::
+    NAMESPACE scope::
     DESTINATION lib/cmake/scope
   )
 
   export(TARGETS scope
-    NAMESPACE std::
+    NAMESPACE scope::
     FILE scopeTargets.cmake
   )
 
-  install(FILES scope.hpp DESTINATION include/experimental)
+  install(FILES scope.hpp DESTINATION include/scope)
 
   include(CMakePackageConfigHelpers)
   configure_package_config_file(scopeConfig.cmake.in
