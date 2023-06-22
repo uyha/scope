@@ -51,11 +51,11 @@ SOFTWARE.
 
 //#define CHECK_COMPILE_ERRORS
 
-using std::experimental::unique_resource;
-using std::experimental::make_unique_resource_checked;
-using std::experimental::scope_exit;
-using std::experimental::scope_fail;
-using std::experimental::scope_success;
+using scope::unique_resource;
+using scope::make_unique_resource_checked;
+using scope::scope_exit;
+using scope::scope_fail;
+using scope::scope_success;
 
 void DemoFstream(){
     {
