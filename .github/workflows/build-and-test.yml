@@ -34,3 +34,15 @@ jobs:
         run: cmake --build build -j
       - name: Test
         run: ctest --test-dir build/tests
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: .github/scripts/env.ps1
+      - name: Configure
+        run: cmake -B build -S .
+      - name: Build
+        run: cmake --build build -j
+      - name: Test
+        run: ctest --test-dir build/tests
