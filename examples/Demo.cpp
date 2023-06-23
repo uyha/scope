@@ -8,15 +8,12 @@
 
 #include "scope.hpp"
 
-#ifndef _MSC_VER
 #include <fcntl.h>
+
+#ifndef _MSC_VER
 #include <unistd.h>
 #else
 #include <io.h>
-#define open _open
-#define close _close
-#define unlink _unlink
-#define write _write
 #endif
 
 namespace {
@@ -34,7 +31,7 @@ void copy_file_transact(path const &from, path const &to) {
 
 void DemonstrateTransactionFilecopy() {
     std::string name("hello.txt");
-    path to("/tmp/scope_hello.txt");
+    path to("scope_hello.txt");
     {
         std::ofstream ofs{name};
         ofs << "Hello world\n";

@@ -40,3 +40,6 @@ scope17.xml
 
 build/
 compile_commands.json
+
+.vs
+CMakeSettings.json
