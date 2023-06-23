@@ -1,19 +1,18 @@
-# scope17
-C++17 version of `unique_resource` and `scope_guards` from LFTS3
+# scope
 
-List of tested compilers:
-- OSX and AppleClang 12.0
-- Linux and gcc 8.3
-- Windows and msvc 2017
-- Windows and msvc 2019
+[![Build and test](https://github.com/uyha/scope/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/uyha/scope/actions/workflows/build-and-test.yml)
 
-Status of tests in CI servers:
+A standalone C++17 header-only library for Andrei Alexandrescu's [Declarative Control Flow](https://www.youtube.com/watch?v=WjTrfoiB0MQ)
+and [P0052](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0052r10.pdf).
 
-| Branch | Travis | Appveyor |
-| ---- | -------- | -------- |
-| **Master** | [![Travis Build](https://travis-ci.org/menuet/scope17.svg?branch=master)](https://travis-ci.org/menuet/scope17) | [![Appveyor Build](https://ci.appveyor.com/api/projects/status/g4oox7x8f7ytfmv6/branch/master?svg=true)](https://ci.appveyor.com/project/menuet/scope17/branch/master) |
+This project is a fork from Peter Sommerlad's [scope17](https://github.com/PeterSommerlad/scope17)
+implementation with changes to make it appropriate for being a standalone
+library.
 
-How to build and run the tests locally:
-```
-mkdir build && cd build && cmake -DCMAKE_VERBOSE_MAKEFILE=TRUE .. && cmake --build . --config Debug && ctest -C Debug
+## Build and test
+
+```sh
+cmake -B build -S .
+cmake --build build
+ctest --test-dir build/tests
 ```
