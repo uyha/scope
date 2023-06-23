@@ -210,38 +210,23 @@ private:
 
 TEST_CASE("Tests from Eric Niebler scope_exit with throwing function object") {
   std::ostringstream out{};
-  try {
-    throwing_copy c{"called anyway", out};
-    auto &&x = scope_exit(c); // -Wunused-variable on clang
-    out << "whoops" << std::endl;
-  } catch (...) {
-    out << "expected";
-  }
-  REQUIRE("called anyway\nexpected" == out.str());
+  throwing_copy c{"called anyway", out};
+  REQUIRE_THROWS(scope_exit(c));
+  REQUIRE("called anyway\n" == out.str());
 }
 
 TEST_CASE("Tests from Eric Niebler scope_success with throwing function object") {
   std::ostringstream out{};
-  try {
-    throwing_copy c{"Oh noes!!!", out};
-    auto &&x = scope_success(c); // -Wunused-variable on clang
-    out << "whoops" << std::endl;
-  } catch (...) {
-    out << "just exception\n";
-  }
-  REQUIRE("just exception\n" == out.str());
+  throwing_copy c{"Oh noes!!!", out};
+  REQUIRE_THROWS(scope_success(c));
+  REQUIRE("" == out.str());
 }
 
 TEST_CASE("Tests from Eric Niebler scope_fail with throwing function object") {
   std::ostringstream out{};
-  try {
-    throwing_copy c{"called because of exception!!!", out};
-    auto &&x = scope_fail(c); // -Wunused-variable on clang
-    out << "whoops" << std::endl;
-  } catch (...) {
-    out << "expected";
-  }
-  REQUIRE("called because of exception!!!\nexpected" == out.str());
+  throwing_copy c{"called because of exception!!!", out};
+  REQUIRE_THROWS(scope_fail(c));
+  REQUIRE("called because of exception!!!\n" == out.str());
 }
 
 TEST_CASE("Test throw on unique_resource doesn't crash it") {
@@ -465,17 +450,9 @@ TEST_CASE("Test make_unique_resource_checked failing copy") {
 
 TEST_CASE("Test make_unique_resource_checked with deleter throwing on copy") {
   std::ostringstream out{};
-  try {
-    auto notcalled = make_unique_resource_checked(0, 0, throwing_copy("notcalled", out));
-  } catch (...) {
-    out << "expected\n";
-  }
-  try {
-    auto called = make_unique_resource_checked(42, 0, throwing_copy("called ", out));
-  } catch (...) {
-    out << "expected2\n";
-  }
-  REQUIRE("expected\ncalled 42\nexpected2\n" == out.str());
+  REQUIRE_THROWS(make_unique_resource_checked(0, 0, throwing_copy("notcalled", out)));
+  REQUIRE_THROWS(make_unique_resource_checked(42, 0, throwing_copy("called ", out)));
+  REQUIRE("called 42\n" == out.str());
 }
 
 TEST_CASE("Test reference_wrapper") {
@@ -606,16 +583,10 @@ TEST_CASE("Test scope_success with side effect") {
 TEST_CASE("Test scope_success might throw") {
   std::ostringstream out{};
   auto lam = [&] {
-    out << "called"; /* throw 42;*/
-  };                 // doesn't work.
-  try {
-    { auto x = scope_success(lam); }
-    // out << " never ";
-  } catch (int) {
-    // OK
-  } catch (...) {
-    out << "bla";
-  }
+    out << "called";
+    throw 42;
+  };
+  REQUIRE_THROWS_AS(scope_success(lam), int);
   REQUIRE("called" == out.str());
 }
 
