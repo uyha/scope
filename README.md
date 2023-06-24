@@ -17,6 +17,11 @@ cmake --build build
 ctest --test-dir build/tests
 ```
 
+## Usage
+
+This is a header-only so you can download [scope.hpp](https://raw.githubusercontent.com/uyha/scope/main/include/scope.hpp)
+to your project and start using it.
+
 ## Features
 
 This library provides the following 4 classes:
