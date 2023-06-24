@@ -32,7 +32,7 @@ and a utility function `make_unique_resource_checked`
 
 These classes provide a way to run code when a scope ends (either by reaching the of a
 block or by exception) without creating RAII classes. These classes differ in when they
-invoke their executables.
+invoke their functions.
 
 | Invoke when scope ends | with exception | without exception |
 | ---------------------- | -------------- | ----------------- |
