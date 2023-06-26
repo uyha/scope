@@ -680,3 +680,17 @@ TEST_CASE("Test that explicit reference parameter compiles") {
   }
   REQUIRE("functocall_called\nfunctocall_called\n" == just_for_testing_side_effect);
 }
+
+TEST_CASE("Macros shall expand to the correct function call and declare different variable names") {
+  auto stream = std::stringstream{};
+  {
+    SCOPE_EXIT([&stream] { stream << "exit\n"; });
+    try {
+      SCOPE_FAIL([&stream] { stream << "fail\n"; });
+      throw 42;
+    } catch (...) {
+    }
+    SCOPE_SUCCESS([&stream] { stream << "success\n"; });
+  }
+  REQUIRE(stream.str() == "fail\nsuccess\nexit\n");
+}

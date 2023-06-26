@@ -12,6 +12,18 @@
 #include <type_traits>
 #include <utility>
 
+#define SCOPE_CONCAT_IMPL(a, b) a##b
+#define SCOPE_CONCAT(a, b) SCOPE_CONCAT_IMPL(a, b)
+#ifdef __COUNTER__
+#define SCOPE_EXIT(...) auto SCOPE_CONCAT(scope_, __COUNTER__) = scope::scope_exit(__VA_ARGS__)
+#define SCOPE_FAIL(...) auto SCOPE_CONCAT(scope_, __COUNTER__) = scope::scope_fail(__VA_ARGS__)
+#define SCOPE_SUCCESS(...) auto SCOPE_CONCAT(scope_, __COUNTER__) = scope::scope_success(__VA_ARGS__)
+#else
+#define SCOPE_EXIT(...) auto SCOPE_CONCAT(scope_, __LINE__) = scope::scope_exit(__VA_ARGS__)
+#define SCOPE_FAIL(...) auto SCOPE_CONCAT(scope_, __LINE__) = scope::scope_fail(__VA_ARGS__)
+#define SCOPE_SUCCESS(...) auto SCOPE_CONCAT(scope_, __LINE__) = scope::scope_success(__VA_ARGS__)
+#endif
+
 namespace scope {
 namespace detail {
 namespace hidden {
