@@ -31,9 +31,13 @@ This library provides the following 4 classes:
 - `scope_success`
 - `unique_resource`
 
-and a utility function `make_unique_resource_checked`
+a utility function `make_unique_resource_checked`, and 3 macros:
 
-### `scope_exit`, `scope_fail`, and `scope_success`
+- `SCOPE_EXIT`
+- `SCOPE_FAIL`
+- `SCOPE_SUCCESS`
+
+### `scope_exit`, `scope_fail`, `scope_success`, and `SCOPE_*` macros
 
 These classes provide a way to run code when a scope ends (either by reaching the of a
 block or by exception) without creating RAII classes. These classes differ in when they
@@ -45,6 +49,19 @@ invoke their functions.
 | `scope_fail`           | yes            | no                |
 | `scope_success`        | no             | yes               |
 
+The macros provide the same functionality to their lower-case counterparts, but they
+also create a unique variable when they are called. This frees the user from having to
+create the variable with unique names manually.
+
+> **Warning**:
+> These `SCOPE_*` macros rely on the `__COUNTER__` when it's available, which
+> should not have any problem when the `SCOPE_*` macros are used on the same line.
+> However, when the `__COUNTER__` macro is not available, `__LINE__` is used
+> instead. This leads to compilation error when using the `SCOPE_*` macros on the
+> same line. So either use compilers that support the `__COUNTER__` macros (GCC,
+> Clang, and MSVC all support it), or make sure that the `SCOPE_*` are not use on the
+> same line.
+
 #### Example
 
 ```cpp
@@ -54,9 +71,13 @@ invoke their functions.
 
 int main() {
   try {
-    auto on_exit    = scope::scope_exit([]{ std::cout << "exit" << std::endl; });
-    auto on_fail    = scope::scope_fail([]{ std::cout << "fail" << std::endl; });
-    auto on_success = scope::scope_success([]{ std::cout << "success" << std::endl; });
+    auto on_exit    = scope::scope_exit([]{ std::cout << "exit\n"; });
+    auto on_fail    = scope::scope_fail([]{ std::cout << "fail\n"; });
+    auto on_success = scope::scope_success([]{ std::cout << "success\n"; });
+
+    SCOPE_EXIT([]{ std::cout << "scope_exit\n"; });
+    SCOPE_FAIL([]{ std::cout << "scope_fail\n"; });
+    SCOPE_SUCCESS([]{ std::cout << "scope_success\n"; });
     throw 42;
   } catch (...) {
   }
@@ -66,6 +87,8 @@ int main() {
 The above snippet prints
 
 ```
+scope_fail
+scope_exit
 fail
 exit
 ```
