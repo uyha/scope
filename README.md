@@ -59,7 +59,7 @@ create the variable with unique names manually.
 > However, when the `__COUNTER__` macro is not available, `__LINE__` is used
 > instead. This leads to compilation error when using the `SCOPE_*` macros on the
 > same line. So either use compilers that support the `__COUNTER__` macros (GCC,
-> Clang, and MSVC all support it), or make sure that the `SCOPE_*` are not use on the
+> Clang, and MSVC all support it), or make sure that the `SCOPE_*` are not used on the
 > same line.
 
 #### Example
